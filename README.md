@@ -23,6 +23,9 @@ For local builds, run `make` which will build the binary, run unit tests and lin
 
 ## Releasing
 
+> Go 1.16 or later is required to build for newer architectures, such as `darwin-arm64`.
+> Go 1.17 is recommended.
+
 This project use `goreleaser` for releasing. To release new version, follow the following steps:
 
 * Add a changelog for new release to CHANGELOG.md file.

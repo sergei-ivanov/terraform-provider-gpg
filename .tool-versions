@@ -1,0 +1,5 @@
+# For use with ASDF: https://asdf-vm.com/
+
+golang 1.17.6
+golangci-lint 1.44.0
+goreleaser 1.3.1
