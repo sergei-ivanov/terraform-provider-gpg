@@ -11,7 +11,7 @@ Managing GPG keyring or signing files is currently not implemented.
 ```hcl
 terraform {
   required_providers {
-    sshcommand = {
+    gpg = {
       source  = "invidian/gpg"
       version = "0.3.0"
     }
