@@ -76,9 +76,9 @@ EOF
 
 ## Argument Reference
 
-* `content` - (Required) Takes message to encrypt as a string.
-* `public_keys`- (Required) Takes array of GPG public keys in ASCII-armored format, which will be used to encrypt the message.
+* `content` - (Required) Text to be encrypted.
+* `public_keys`- (Required) A list of GPG public keys in ASCII-armored format, which will be used to encrypt the content.
 
 ## Attribute Reference
 
-* `result` - Stores GPG encrypted message in ASCII-armored format.
+* `result` - GPG-encrypted content in ASCII-armored format.

@@ -2,12 +2,14 @@ package gpg
 
 import (
 	"bytes"
+	"context"
 	"crypto/sha256"
 	"fmt"
 	"io"
 	"strings"
 
-	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"golang.org/x/crypto/openpgp"
 	"golang.org/x/crypto/openpgp/armor"
 	"golang.org/x/crypto/openpgp/packet"
@@ -15,24 +17,32 @@ import (
 
 func resourceGPGEncryptedMessage() *schema.Resource {
 	return &schema.Resource{
-		Create: resourceGPGEncryptedMessageCreate,
-		// Those 2 functions below does nothing, but must be implemented.
-		Read:   resourceGPGEncryptedMessageRead,
-		Delete: resourceGPGEncryptedMessageDelete,
+		Description: "GPG-encrypted message",
+
+		CreateContext: resourceGPGEncryptedMessageCreate,
+		// These 2 functions below do nothing, but must be implemented.
+		ReadContext:   resourceGPGEncryptedMessageRead,
+		DeleteContext: resourceGPGEncryptedMessageDelete,
+
+		Importer: &schema.ResourceImporter{
+			StateContext: schema.ImportStatePassthroughContext,
+		},
 
 		Schema: map[string]*schema.Schema{
 			"content": {
-				Type:      schema.TypeString,
-				Required:  true,
-				ForceNew:  true,
-				Sensitive: true,
-				StateFunc: sha256sum,
+				Type:        schema.TypeString,
+				Description: "Text to be encrypted.",
+				Required:    true,
+				ForceNew:    true,
+				Sensitive:   true,
+				StateFunc:   sha256sum,
 			},
 			"public_keys": {
-				Type:     schema.TypeList,
-				MinItems: 1,
-				ForceNew: true,
-				Required: true,
+				Type:        schema.TypeList,
+				Description: "A list of GPG public keys in ASCII-armored format, which will be used to encrypt the `content`.",
+				MinItems:    1,
+				ForceNew:    true,
+				Required:    true,
 				Elem: &schema.Schema{
 					Type:     schema.TypeString,
 					ForceNew: true,
@@ -51,10 +61,11 @@ func resourceGPGEncryptedMessage() *schema.Resource {
 				},
 			},
 			"result": {
-				Type:      schema.TypeString,
-				Computed:  true,
-				ForceNew:  true,
-				Sensitive: true,
+				Type:        schema.TypeString,
+				Description: "GPG-encrypted `content` in ASCII-armored format.",
+				Computed:    true,
+				ForceNew:    true,
+				Sensitive:   true,
 			},
 		},
 	}
@@ -129,23 +140,23 @@ func encryptAndEncodeMessage(recipients []*openpgp.Entity, message string) (stri
 	return buf.String(), nil
 }
 
-func resourceGPGEncryptedMessageCreate(d *schema.ResourceData, m interface{}) error {
+func resourceGPGEncryptedMessageCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	recipients, err := getRecipients(d)
 	if err != nil {
-		return fmt.Errorf("getting recipients: %w", err)
+		return diag.Errorf("getting recipients: %s", err)
 	}
 
 	if err := savePublicKeys(d, recipients); err != nil {
-		return fmt.Errorf("saving public keys: %w", err)
+		return diag.Errorf("saving public keys: %s", err)
 	}
 
 	encryptedMessage, err := encryptAndEncodeMessage(recipients, d.Get("content").(string))
 	if err != nil {
-		return fmt.Errorf("encrypting message: %w", err)
+		return diag.Errorf("encrypting message: %s", err)
 	}
 
 	if err := d.Set("result", encryptedMessage); err != nil {
-		return fmt.Errorf("setting %q property: %w", "result", err)
+		return diag.Errorf("setting %q property: %s", "result", err)
 	}
 
 	// Calculate SHA-256 checksum of message for ID.
@@ -154,11 +165,11 @@ func resourceGPGEncryptedMessageCreate(d *schema.ResourceData, m interface{}) er
 	return nil
 }
 
-func resourceGPGEncryptedMessageRead(d *schema.ResourceData, m interface{}) error {
+func resourceGPGEncryptedMessageRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	return nil
 }
 
-func resourceGPGEncryptedMessageDelete(d *schema.ResourceData, m interface{}) error {
+func resourceGPGEncryptedMessageDelete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	d.SetId("")
 
 	return nil

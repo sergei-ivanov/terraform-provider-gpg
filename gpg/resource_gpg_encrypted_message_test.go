@@ -1,13 +1,10 @@
-package gpg_test
+package gpg
 
 import (
 	"regexp"
 	"testing"
 
-	"github.com/hashicorp/terraform-plugin-sdk/helper/resource"
-	"github.com/hashicorp/terraform-plugin-sdk/terraform"
-
-	"github.com/invidian/terraform-provider-gpg/gpg"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 )
 
 const basicConfig = `
@@ -109,9 +106,7 @@ func TestGPGEncryptedMessage(t *testing.T) {
 	t.Parallel()
 
 	resource.UnitTest(t, resource.TestCase{
-		Providers: map[string]terraform.ResourceProvider{
-			"gpg": gpg.Provider(),
-		},
+		ProviderFactories: testProviderFactories,
 		Steps: []resource.TestStep{
 			{
 				Config: basicConfig,
@@ -137,13 +132,11 @@ func TestGPGEncryptedMessageBadArguments(t *testing.T) {
 	t.Parallel()
 
 	resource.UnitTest(t, resource.TestCase{
-		Providers: map[string]terraform.ResourceProvider{
-			"gpg": gpg.Provider(),
-		},
+		ProviderFactories: testProviderFactories,
 		Steps: []resource.TestStep{
 			{
 				Config:      noPublicKeys,
-				ExpectError: regexp.MustCompile(`attribute supports 1 item as a minimum`),
+				ExpectError: regexp.MustCompile(`Attribute requires 1 item minimum, but config has only 0 declared.`),
 				Destroy:     false,
 			},
 		},
