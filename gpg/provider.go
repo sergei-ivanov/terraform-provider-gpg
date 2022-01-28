@@ -10,12 +10,15 @@ func init() {
 	schema.DescriptionKind = schema.StringMarkdown
 }
 
-// Provider exports terraform-provider-gpg, which can be used in tests
-// for other providers.
-func Provider() *schema.Provider {
-	return &schema.Provider{
-		ResourcesMap: map[string]*schema.Resource{
-			"gpg_encrypted_message": resourceGPGEncryptedMessage(),
-		},
+func New() func() *schema.Provider {
+	return func() *schema.Provider {
+		return &schema.Provider{
+			DataSourcesMap: map[string]*schema.Resource{
+				// None at this point
+			},
+			ResourcesMap: map[string]*schema.Resource{
+				"gpg_encrypted_message": resourceGPGEncryptedMessage(),
+			},
+		}
 	}
 }

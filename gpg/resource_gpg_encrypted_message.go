@@ -17,6 +17,7 @@ import (
 
 func resourceGPGEncryptedMessage() *schema.Resource {
 	return &schema.Resource{
+		// This description is used by the documentation generator and the language server.
 		Description: "GPG-encrypted message",
 
 		CreateContext: resourceGPGEncryptedMessageCreate,
@@ -30,22 +31,23 @@ func resourceGPGEncryptedMessage() *schema.Resource {
 
 		Schema: map[string]*schema.Schema{
 			"content": {
-				Type:        schema.TypeString,
 				Description: "Text to be encrypted.",
+				Type:        schema.TypeString,
 				Required:    true,
 				ForceNew:    true,
 				Sensitive:   true,
 				StateFunc:   sha256sum,
 			},
 			"public_keys": {
+				Description: "A list of GPG public keys, in ASCII-armored format, which will be used to encrypt the `content`.",
 				Type:        schema.TypeList,
-				Description: "A list of GPG public keys in ASCII-armored format, which will be used to encrypt the `content`.",
 				MinItems:    1,
 				ForceNew:    true,
 				Required:    true,
 				Elem: &schema.Schema{
-					Type:     schema.TypeString,
-					ForceNew: true,
+					Description: "GPG public key, in ASCII-armored format.",
+					Type:        schema.TypeString,
+					ForceNew:    true,
 					StateFunc: func(val interface{}) string {
 						recipient, err := entityFromString(val.(string))
 						if err != nil {
@@ -61,8 +63,8 @@ func resourceGPGEncryptedMessage() *schema.Resource {
 				},
 			},
 			"result": {
+				Description: "GPG-encrypted `content`, in ASCII-armored format.",
 				Type:        schema.TypeString,
-				Description: "GPG-encrypted `content` in ASCII-armored format.",
 				Computed:    true,
 				ForceNew:    true,
 				Sensitive:   true,

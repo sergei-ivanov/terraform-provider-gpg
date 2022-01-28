@@ -43,7 +43,7 @@ build:
 
 .PHONY: test
 test: build-test
-	$(GOTEST) -run $(GO_TESTS) $(GO_PACKAGES)
+	TF_ACC=1 $(GOTEST) -timeout 5m -run $(GO_TESTS) $(GO_PACKAGES)
 
 .PHONY: lint
 lint:
@@ -69,7 +69,7 @@ all-cover: build build-test test-cover lint
 
 .PHONY: test-cover
 test-cover: build-test
-	$(GOTEST) -run $(GO_TESTS) -coverprofile=$(PROFILEFILE) $(GO_PACKAGES)
+	TF_ACC=1 $(GOTEST) -timeout 5m -run $(GO_TESTS) -coverprofile=$(PROFILEFILE) $(GO_PACKAGES)
 
 .PHONY: cover-upload
 cover-upload: codecov

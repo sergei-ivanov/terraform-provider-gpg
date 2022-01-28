@@ -7,22 +7,21 @@ import (
 )
 
 const (
-	// Provider name for single configuration testing
+	// Provider name for default configuration testing
 	ProviderName = "gpg"
 )
 
-var testProviderFactories map[string]func() (*schema.Provider, error)
-
-func init() {
-	testProviderFactories = map[string]func() (*schema.Provider, error){
-		ProviderName: func() (*schema.Provider, error) {
-			return Provider(), nil
-		},
-	}
+// providerFactories are used to instantiate a provider during acceptance testing.
+// The factory function will be invoked for every Terraform CLI command executed
+// to create a provider server to which the CLI can reattach.
+var providerFactories = map[string]func() (*schema.Provider, error){
+	ProviderName: func() (*schema.Provider, error) {
+		return New()(), nil
+	},
 }
 
 func TestProvider(t *testing.T) {
-	if err := Provider().InternalValidate(); err != nil {
+	if err := New()().InternalValidate(); err != nil {
 		t.Fatalf("validating provider internally: %v", err)
 	}
 }
@@ -32,7 +31,7 @@ func TestProvider_HasResources(t *testing.T) {
 		"gpg_encrypted_message",
 	}
 
-	resources := Provider().ResourcesMap
+	resources := New()().ResourcesMap
 	if len(expectedResources) != len(resources) {
 		t.Errorf("There are an unexpected number of registered resources. Expected %v got %v", len(expectedResources), len(resources))
 	}
@@ -48,9 +47,11 @@ func TestProvider_HasResources(t *testing.T) {
 }
 
 func TestProvider_HasDataSources(t *testing.T) {
-	expectedDataSources := []string{}
+	expectedDataSources := []string{
+		// None at this point
+	}
 
-	dataSources := Provider().DataSourcesMap
+	dataSources := New()().DataSourcesMap
 	if len(expectedDataSources) != len(dataSources) {
 		t.Errorf("There are an unexpected number of registered data sources. Expected %v got %v", len(expectedDataSources), len(dataSources))
 	}

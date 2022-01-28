@@ -7,9 +7,10 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 )
 
-const basicConfig = `
+func testGPGEncryptedMessageConfig_basic() string {
+	return `
 resource "gpg_encrypted_message" "example" {
-  content     = "This is example of GPG encrypted message."
+  content = "This is example of GPG encrypted message."
   public_keys = [
     var.gpg_public_key,
   ]
@@ -69,73 +70,87 @@ kYwSAgYxKBAk6QXOyRSPDf/QkVC5l9jOEaUI7NQBgWsH
 EOF
 }
 `
+}
 
-const badPublicKey = `
+func testGPGEncryptedMessageConfig_badPublicKey() string {
+	return `
 resource "gpg_encrypted_message" "example" {
-  content     = "This is example of GPG encrypted message."
+  content = "This is example of GPG encrypted message."
   public_keys = [
-		"not valid message",
+    "not valid message",
   ]
 }
 `
+}
 
-const badPublicKeyPEMEncoded = `
+func testGPGEncryptedMessageConfig_badPublicKeyPEMEncoded() string {
+	return `
 resource "gpg_encrypted_message" "example" {
-  content     = "This is example of GPG encrypted message."
-	public_keys = [
-		<<EOF
+  content = "This is example of GPG encrypted message."
+  public_keys = [
+    <<EOF
 -----BEGIN PGP PUBLIC KEY BLOCK-----
 
 bm9wZQo=
 -----END PGP PUBLIC KEY BLOCK-----
 EOF
-		,
-	]
+    ,
+  ]
+}
+`
 }
 
-`
-
-const noPublicKeys = `
+func testGPGEncryptedMessageConfig_noPublicKeys() string {
+	return `
 resource "gpg_encrypted_message" "example" {
   content     = "This is example of GPG encrypted message."
   public_keys = []
 }
 `
+}
 
 func TestGPGEncryptedMessage(t *testing.T) {
 	t.Parallel()
 
 	resource.UnitTest(t, resource.TestCase{
-		ProviderFactories: testProviderFactories,
+		ProviderFactories: providerFactories,
 		Steps: []resource.TestStep{
 			{
-				Config: basicConfig,
+				Config: testGPGEncryptedMessageConfig_basic(),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestMatchResourceAttr(
+						"gpg_encrypted_message.example", "id",
+						regexp.MustCompile("^[0-9a-fA-F]*$")),
+					resource.TestMatchResourceAttr(
+						"gpg_encrypted_message.example", "result",
+						regexp.MustCompile("(?ms)^-----BEGIN PGP MESSAGE-----\n.*\n-----END PGP MESSAGE-----$")),
+				),
 			},
 			{
-				Config:             basicConfig,
+				Config:             testGPGEncryptedMessageConfig_basic(),
 				PlanOnly:           true,
 				ExpectNonEmptyPlan: false,
 			},
 			{
-				Config:      badPublicKey,
+				Config:      testGPGEncryptedMessageConfig_badPublicKey(),
 				ExpectError: regexp.MustCompile(`decoding public key: EOF`),
 			},
 			{
-				Config:      badPublicKeyPEMEncoded,
+				Config:      testGPGEncryptedMessageConfig_badPublicKeyPEMEncoded(),
 				ExpectError: regexp.MustCompile(`parsing public key`),
 			},
 		},
 	})
 }
 
-func TestGPGEncryptedMessageBadArguments(t *testing.T) {
+func TestGPGEncryptedMessage_BadArguments(t *testing.T) {
 	t.Parallel()
 
 	resource.UnitTest(t, resource.TestCase{
-		ProviderFactories: testProviderFactories,
+		ProviderFactories: providerFactories,
 		Steps: []resource.TestStep{
 			{
-				Config:      noPublicKeys,
+				Config:      testGPGEncryptedMessageConfig_noPublicKeys(),
 				ExpectError: regexp.MustCompile(`Attribute requires 1 item minimum, but config has only 0 declared.`),
 				Destroy:     false,
 			},
