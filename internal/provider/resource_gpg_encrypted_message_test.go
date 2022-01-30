@@ -110,9 +110,7 @@ resource "gpg_encrypted_message" "example" {
 }
 
 func TestGPGEncryptedMessage(t *testing.T) {
-	t.Parallel()
-
-	resource.UnitTest(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		ProviderFactories: providerFactories,
 		Steps: []resource.TestStep{
 			{
@@ -144,9 +142,7 @@ func TestGPGEncryptedMessage(t *testing.T) {
 }
 
 func TestGPGEncryptedMessage_BadArguments(t *testing.T) {
-	t.Parallel()
-
-	resource.UnitTest(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		ProviderFactories: providerFactories,
 		Steps: []resource.TestStep{
 			{

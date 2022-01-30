@@ -19,5 +19,5 @@ ADD . /go/src/terraform-provider-gpg
 
 # Build, test and lint
 RUN go build -v && \
-    go test ./... && \
+    TF_ACC=1 go test -v ./... && \
     $HOME/bin/golangci-lint run
