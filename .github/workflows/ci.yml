@@ -1,0 +1,68 @@
+name: CI
+on:
+  pull_request:
+  push:
+    branches:
+    - master
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    container: golangci/golangci-lint:v1.44.0
+    steps:
+    - uses: actions/cache@v2
+      with:
+        path: |
+          ~/go/pkg/mod
+          ~/.cache/go-build
+        key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
+        restore-keys: |
+          ${{ runner.os }}-go-
+    - uses: actions/checkout@v2
+      with:
+        # Required for Codecov report uploading.
+        fetch-depth: 0
+    - run: make install-cc-test-reporter install-changelog BIN_PATH=/usr/local/bin
+    - run: make test-update-linters test-tidy test-changelog test-cover-upload lint
+  build-docker:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+    - uses: docker/build-push-action@v2
+  codespell:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+    - uses: codespell-project/actions-codespell@master
+      with:
+        skip: .git,go.sum
+        ignore_words_list: decorder
+        check_filenames: true
+        check_hidden: true
+  semgrep:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+    # Use dedicated action for nice integration with GitHub.
+    - uses: returntocorp/semgrep-action@v1
+  build-release:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/cache@v2
+      with:
+        path: |
+          ~/go/pkg/mod
+          ~/.cache/go-build
+        key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
+        restore-keys: |
+          ${{ runner.os }}-go-
+    - uses: actions/checkout@v2
+      with:
+        fetch-depth: 0
+    - uses: actions/setup-go@v2
+      with:
+        go-version: 1.16
+    - name: Generate GPG key
+      run: echo "GPG_FINGERPRINT=$(gpg --batch --passphrase '' --quick-gen-key USER_ID default default 2>&1 | grep 'marked as ultimately trusted' | cut -d' ' -f3)" >> $GITHUB_ENV
+    - uses: goreleaser/goreleaser-action@v2
+      with:
+        args: release --snapshot

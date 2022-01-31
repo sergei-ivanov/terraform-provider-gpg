@@ -13,10 +13,12 @@ GOBUILD=CGO_ENABLED=$(CGO_ENABLED) $(GOCMD) build -v -buildmode=exe -ldflags $(L
 GO_PACKAGES=./...
 GO_TESTS=^.*$
 
-GOLANGCI_LINT_VERSION=v1.30.0
-DISABLED_LINTERS=gci,goerr113
+GOLANGCI_LINT_VERSION=v1.44.0
 
 BIN_PATH=$$HOME/bin
+
+COVERPROFILE=c.out
+CC_TEST_REPORTER_ID=7b59c847e0a4db01a8464de8547df8e2c9875dbbf7e4e1e474825885f8a3c133
 
 .PHONY: all
 all: build build-test test lint
@@ -47,7 +49,7 @@ test: build-test
 
 .PHONY: lint
 lint:
-	golangci-lint run --enable-all --disable=$(DISABLED_LINTERS) --max-same-issues=0 --max-issues-per-linter=0 --build-tags integration --timeout 10m --exclude-use-default=false $(GO_PACKAGES)
+	golangci-lint run $(GO_PACKAGES)
 
 .PHONY: build-test
 build-test:
@@ -69,17 +71,63 @@ all-cover: build build-test test-cover lint
 
 .PHONY: test-cover
 test-cover: build-test
-	$(GOTEST) -run $(GO_TESTS) -coverprofile=$(PROFILEFILE) $(GO_PACKAGES)
+	$(GOTEST) -run $(GO_TESTS) -coverprofile=$(COVERPROFILE) $(GO_PACKAGES)
 
-.PHONY: cover-upload
-cover-upload: codecov
-	# Make codeclimate as command, as we need to run test-cover twice and make deduplicates that.
-	# Go test results are cached anyway, so it's fine to run it multiple times.
-	make codeclimate
+.PHONY: test-cover-upload-codecov
+test-cover-upload-codecov: SHELL=/bin/bash
+test-cover-upload-codecov: test-cover
+test-cover-upload-codecov:
+	bash <(curl -s https://codecov.io/bash) -f $(COVERPROFILE)
 
-.PHONY: codecov
-codecov: PROFILEFILE=coverage.txt
-codecov: SHELL=/bin/bash
-codecov: test-cover
-codecov:
-	bash <(curl -s https://codecov.io/bash)
+.PHONY: test-cover-upload-codeclimate
+test-cover-upload-codeclimate: test-cover
+test-cover-upload-codeclimate:
+	env CC_TEST_REPORTER_ID=$(CC_TEST_REPORTER_ID) cc-test-reporter after-build -t gocov -p $$(go list -m)
+
+.PHONY: test-cover-upload
+test-cover-upload: test-cover-upload-codecov test-cover-upload-codeclimate
+
+.PHONY: codespell
+codespell:
+	codespell -S .git,state.yaml,go.sum,terraform.tfstate,terraform.tfstate.backup,./local-testing/resources -L decorder
+
+.PHONY: codespell-pr
+codespell-pr:
+	git diff master..HEAD | grep -v ^- | codespell -
+	git log master..HEAD | codespell -
+
+.PHONY: test-working-tree-clean
+test-working-tree-clean:
+	@test -z "$$(git status --porcelain)" || (echo "Commit all changes before running this target"; exit 1)
+
+.PHONY: test-changelog
+test-changelog: test-working-tree-clean
+	make format-changelog
+	@test -z "$$(git status --porcelain)" || (echo "Please run 'make format-changelog' and commit generated changes."; git diff; exit 1)
+
+.PHONY: format-changelog
+format-changelog:
+	changelog fmt -o CHANGELOG.md.fmt
+	mv CHANGELOG.md.fmt CHANGELOG.md
+
+.PHONY: install-changelog
+install-changelog:
+	go get github.com/rcmachado/changelog@0.7.0
+	go mod tidy
+
+.PHONY: update-linters
+update-linters:
+	# Remove all enabled linters.
+	sed -i '/^  enable:/q0' .golangci.yml
+	# Then add all possible linters to config.
+	golangci-lint linters | grep -E '^\S+:' | cut -d: -f1 | sort | sed 's/^/    - /g' | grep -v -E "($$(grep '^  disable:' -A 100 .golangci.yml  | grep -E '    - \S+$$' | awk '{print $$2}' | tr \\n '|' | sed 's/|$$//g'))" >> .golangci.yml
+
+.PHONY: test-update-linters
+test-update-linters: test-working-tree-clean
+	make update-linters
+	@test -z "$$(git status --porcelain)" || (echo "Linter configuration outdated. Run 'make update-linters' and commit generated changes to fix."; exit 1)
+
+.PHONY: test-tidy
+test-tidy: test-working-tree-clean
+	go mod tidy
+	@test -z "$$(git status --porcelain)" || (echo "Please run 'go mod tidy' and commit generated changes."; git diff; exit 1)

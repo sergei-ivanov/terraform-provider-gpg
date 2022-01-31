@@ -60,12 +60,17 @@ func resourceGPGEncryptedMessage() *schema.Resource {
 	}
 }
 
-func getRecipients(d *schema.ResourceData) ([]*openpgp.Entity, error) {
+func getRecipients(data *schema.ResourceData) ([]*openpgp.Entity, error) {
 	// Store recipients for encryption.
 	recipients := []*openpgp.Entity{}
 
 	// Iterate over public keys, decode, parse, collect their IDs and add to recipients list.
-	for i, pk := range d.Get("public_keys").([]interface{}) {
+	publicKeys, ok := data.Get("public_keys").([]interface{})
+	if !ok {
+		return nil, fmt.Errorf("expected type %T on key %q, got %T", "public_keys", []interface{}{}, data.Get("public_keys"))
+	}
+
+	for i, pk := range publicKeys {
 		recipient, err := entityFromString(pk.(string))
 		if err != nil {
 			return nil, fmt.Errorf("decoding public key #%d: %w", i, err)
@@ -77,7 +82,7 @@ func getRecipients(d *schema.ResourceData) ([]*openpgp.Entity, error) {
 	return recipients, nil
 }
 
-func savePublicKeys(d *schema.ResourceData, recipients []*openpgp.Entity) error {
+func savePublicKeys(data *schema.ResourceData, recipients []*openpgp.Entity) error {
 	// Store ID of each public key, to store them in state (StateFunc does not work for TypeList for some reason).
 	pksIDs := []string{}
 
@@ -85,7 +90,7 @@ func savePublicKeys(d *schema.ResourceData, recipients []*openpgp.Entity) error 
 		pksIDs = append(pksIDs, recipient.PrimaryKey.KeyIdString())
 	}
 
-	if err := d.Set("public_keys", pksIDs); err != nil {
+	if err := data.Set("public_keys", pksIDs); err != nil {
 		return fmt.Errorf("setting %q property: %w", "public_keys", err)
 	}
 
@@ -129,27 +134,27 @@ func encryptAndEncodeMessage(recipients []*openpgp.Entity, message string) (stri
 	return buf.String(), nil
 }
 
-func resourceGPGEncryptedMessageCreate(d *schema.ResourceData, m interface{}) error {
-	recipients, err := getRecipients(d)
+func resourceGPGEncryptedMessageCreate(data *schema.ResourceData, m interface{}) error {
+	recipients, err := getRecipients(data)
 	if err != nil {
 		return fmt.Errorf("getting recipients: %w", err)
 	}
 
-	if err := savePublicKeys(d, recipients); err != nil {
+	if err := savePublicKeys(data, recipients); err != nil {
 		return fmt.Errorf("saving public keys: %w", err)
 	}
 
-	encryptedMessage, err := encryptAndEncodeMessage(recipients, d.Get("content").(string))
+	encryptedMessage, err := encryptAndEncodeMessage(recipients, data.Get("content").(string))
 	if err != nil {
 		return fmt.Errorf("encrypting message: %w", err)
 	}
 
-	if err := d.Set("result", encryptedMessage); err != nil {
+	if err := data.Set("result", encryptedMessage); err != nil {
 		return fmt.Errorf("setting %q property: %w", "result", err)
 	}
 
 	// Calculate SHA-256 checksum of message for ID.
-	d.SetId(sha256sum(encryptedMessage))
+	data.SetId(sha256sum(encryptedMessage))
 
 	return nil
 }
@@ -179,5 +184,11 @@ func entityFromString(key string) (*openpgp.Entity, error) {
 }
 
 func sha256sum(data interface{}) string {
-	return fmt.Sprintf("%x", sha256.Sum256([]byte(data.(string))))
+	bytes, ok := data.(string)
+	if !ok {
+		// There is no way to handle this gracefully with existing SDK.
+		panic(fmt.Sprintf("Expected state data to be of type %T, got %T", "", data))
+	}
+
+	return fmt.Sprintf("%x", sha256.Sum256([]byte(bytes)))
 }
