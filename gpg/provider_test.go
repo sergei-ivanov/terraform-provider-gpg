@@ -9,7 +9,14 @@ import (
 )
 
 func TestProvider(t *testing.T) {
-	if err := gpg.Provider().(*schema.Provider).InternalValidate(); err != nil {
+	t.Parallel()
+
+	provider, ok := gpg.Provider().(*schema.Provider)
+	if !ok {
+		t.Fatalf("Got unexpected provider type, expected %T, got %T", &schema.Provider{}, gpg.Provider())
+	}
+
+	if err := provider.InternalValidate(); err != nil {
 		t.Fatalf("validating provider internally: %v", err)
 	}
 }

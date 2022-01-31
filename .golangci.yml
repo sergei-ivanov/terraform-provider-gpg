@@ -1,0 +1,121 @@
+outpur:
+  sort-results: true
+
+issues:
+  exclude-use-default: false
+  max-same-issues: 0
+  max-issues-per-linter: 0
+
+linters-settings:
+  errcheck:
+    check-type-assertions: true
+    check-blank: true
+  gci:
+    local-prefixes: github.com/invidian/terraform-provider-gpg
+  godot:
+    capital: true
+  gofumpt:
+    extra-rules: true
+  govet:
+    enable-all: true
+    disable:
+      - fieldalignment
+      - shadow
+  makezero:
+    always: true
+  nolintlint:
+    allow-leading-space: false
+    require-explanation: true
+    require-specific: true
+  wsl:
+    force-err-cuddling: true
+
+linters:
+  disable:
+    # Allow returning interface as a convention.
+    - ireturn
+    # Allow making use of zero-value of struct fields.
+    - exhaustivestruct
+    # Don't require API-compatible errors.
+    - goerr113
+    # This linter has been deprecated.
+    - golint
+    - interfacer
+    - maligned
+  enable:
+    - asciicheck
+    - bidichk
+    - bodyclose
+    - containedctx
+    - contextcheck
+    - cyclop
+    - deadcode
+    - decorder
+    - depguard
+    - dogsled
+    - dupl
+    - durationcheck
+    - errcheck
+    - errchkjson
+    - errname
+    - errorlint
+    - exhaustive
+    - exportloopref
+    - forbidigo
+    - forcetypeassert
+    - funlen
+    - gci
+    - gochecknoglobals
+    - gochecknoinits
+    - gocognit
+    - goconst
+    - gocritic
+    - gocyclo
+    - godot
+    - godox
+    - gofmt
+    - gofumpt
+    - goheader
+    - goimports
+    - gomnd
+    - gomoddirectives
+    - gomodguard
+    - goprintffuncname
+    - grouper
+    - ifshort
+    - importas
+    - ineffassign
+    - lll
+    - maintidx
+    - makezero
+    - misspell
+    - nakedret
+    - nestif
+    - nilerr
+    - nilnil
+    - nlreturn
+    - noctx
+    - nolintlint
+    - paralleltest
+    - prealloc
+    - predeclared
+    - promlinter
+    - revive
+    - rowserrcheck
+    - sqlclosecheck
+    - structcheck
+    - stylecheck
+    - tagliatelle
+    - tenv
+    - testpackage
+    - thelper
+    - tparallel
+    - typecheck
+    - unconvert
+    - unparam
+    - varcheck
+    - varnamelen
+    - wastedassign
+    - whitespace
+    - wrapcheck
+    - wsl
