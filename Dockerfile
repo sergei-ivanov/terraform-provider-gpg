@@ -1,4 +1,4 @@
-FROM golang:1.15-alpine
+FROM golang:1.17-alpine
 
 # Enable go modules
 ENV GO111MODULE=on
@@ -7,7 +7,7 @@ ENV GO111MODULE=on
 RUN apk add curl git build-base
 
 # Install linter
-RUN curl -sfL https://install.goreleaser.com/github.com/golangci/golangci-lint.sh | sh -s -- -b $HOME/bin v1.44.0
+RUN curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b $HOME/bin v1.44.0
 
 # Copy go mod files first and install dependencies to cache this layer
 ADD ./go.mod ./go.sum /go/src/terraform-provider-gpg/
@@ -19,5 +19,5 @@ ADD . /go/src/terraform-provider-gpg
 
 # Build, test and lint
 RUN go build -v && \
-    go test && \
+    go test -v ./... && \
     $HOME/bin/golangci-lint run
