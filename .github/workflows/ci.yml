@@ -60,7 +60,7 @@ jobs:
         fetch-depth: 0
     - uses: actions/setup-go@v2
       with:
-        go-version: 1.16
+        go-version: 1.17
     - name: Generate GPG key
       run: echo "GPG_FINGERPRINT=$(gpg --batch --passphrase '' --quick-gen-key USER_ID default default 2>&1 | grep 'marked as ultimately trusted' | cut -d' ' -f3)" >> $GITHUB_ENV
     - uses: goreleaser/goreleaser-action@v2
