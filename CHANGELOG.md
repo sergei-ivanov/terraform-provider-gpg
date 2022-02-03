@@ -5,7 +5,7 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## 0.3.1 - 2022-02-03
+## [0.3.1] - 2022-02-03
 ### Added
 - Added CI using GitHub Actions.
 
@@ -18,7 +18,7 @@ either Terraform itself or Terraform Registry.
 ### Fixed
 - Fixed all issues found by linter.
 
-## 0.3.0 - 2020-08-19
+## [0.3.0] - 2020-08-19
 ### Added
 - This provider is now available via [Terraform Registry](https://registry.terraform.io/providers/invidian/gpg/latest).
 - Added basic unit tests.
@@ -55,6 +55,8 @@ either Terraform itself or Terraform Registry.
 ### Added
 - Initial release
 
+[0.3.1]: https://github.com/invidian/terraform-provider-gpg/compare/v0.3.0...v0.3.1
+[0.3.0]: https://github.com/invidian/terraform-provider-gpg/compare/v0.2.1...v0.3.0
 [0.2.1]: https://github.com/invidian/terraform-provider-gpg/compare/v0.2.0...v0.2.1
 [0.2.0]: https://github.com/invidian/terraform-provider-gpg/compare/v0.1.0...v0.2.0
 [0.1.0]: https://github.com/invidian/terraform-provider-gpg/releases/tag/v0.1.0
