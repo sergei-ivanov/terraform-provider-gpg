@@ -5,6 +5,19 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## 0.3.1 - 2022-02-03
+### Added
+- Added CI using GitHub Actions.
+
+### Changed
+- Go 1.17 is now used for building.
+- Exlucuded `darwin/arm`, `freebsd/arm64`, `windows/arm` and `windows/arm64` platforms from
+release builds to speed up the release process, as they are not officially supported by
+either Terraform itself or Terraform Registry.
+
+### Fixed
+- Fixed all issues found by linter.
+
 ## 0.3.0 - 2020-08-19
 ### Added
 - This provider is now available via [Terraform Registry](https://registry.terraform.io/providers/invidian/gpg/latest).
